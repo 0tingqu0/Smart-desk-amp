@@ -1,0 +1,2 @@
+../Core/Src/photoresistor.c:16:6:UR3_Send_Info	24	static
+../Core/Src/photoresistor.c:22:6:Get_ADC_Sample	8	static
