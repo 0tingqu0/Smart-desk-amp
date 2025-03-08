@@ -21,7 +21,7 @@ void key_control(){
 	{
 		HAL_Delay(20);
 		while(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12)==RESET);
-		HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+		hal_ledpwm(0);
 
 	}
 	else if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)==RESET)//key2 模式切换

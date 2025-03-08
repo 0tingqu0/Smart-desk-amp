@@ -10,7 +10,8 @@
 
 #include "main.h"
 #include "tim.h"
-
+#include <PWM.h>
+#include "gpio.h"
 
 void key_control();
 #endif /* INC_KEY_H_ */

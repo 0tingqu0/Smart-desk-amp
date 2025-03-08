@@ -100,7 +100,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
             // 通过UART1非阻塞发送数据
             HAL_UART_Transmit_IT(&huart1, uart3_rx_buf, RX_BUF_SIZE);
             if(uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x01 && a == 0){
-            	led=50;
+            	led=20;
             	hal_ledpwm(led);//调pwm波开灯
             	a=1;
             }
@@ -111,11 +111,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
             }
             if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && a == 1){
             	led=led+10;
-                hal_ledpwm(led);//调pwm波
+            	hal_ledpwm(led);
             }
-            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && a == 1){
-                led=led-10;
-                hal_ledpwm(led);//调pwm波
+            if(uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x10 && a == 1){
+            	led=led-10;
+            	hal_ledpwm(led);
             }
         }
         // 重新启动接收
@@ -185,7 +185,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_ADCEx_Calibration_Start(&hadc1);
-
   HAL_UART_Receive_IT(&huart3, uart3_rx_buf, RX_BUF_SIZE);
   /* USER CODE END 2 */
 
@@ -194,48 +193,46 @@ int main(void)
   while (1)
   {
 
+	  key_control();
 
-//	  key_control();
-//
-//	    // 启动ADC转换并等待完成
-//	    HAL_ADC_Start(&hadc1);  // 单次模式需每次启动
-//	    //Enter_LowPower_Mode();//低功耗会导致无法烧录
-//
-//	    if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
-//	               value = Apply_Sliding_Filter(HAL_ADC_GetValue(&hadc1));
-//	               mean_value += value;
-//	               voltage = (value / 4095.0) * 3.3;
-//	               mean_voltage += voltage;
-//	               i++;
-//
-//	               if (i == 1023) {
-//	                   mean_value /= i;
-//	                   mean_voltage /= i;
-//
+	    // 启动ADC转换并等待完成
+	    HAL_ADC_Start(&hadc1);  // 单次模式需每次启动
+	    //Enter_LowPower_Mode();//低功耗会导致无法烧录
+
+	    if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
+	               value = Apply_Sliding_Filter(HAL_ADC_GetValue(&hadc1));
+	               mean_value += value;
+	               voltage = (value / 4095.0) * 3.3;
+	               mean_voltage += voltage;
+	               i++;
+
+	               if (i == 1023) {
+	                   mean_value /= i;
+	                   mean_voltage /= i;
+
 //	                   snprintf(message, sizeof(message), "ADC:%ld V:%.2f",mean_value, (float)mean_voltage);
 //	                   // 直接发送数据
-////	                   HAL_UART_Transmit(&huart1, (uint8_t*)message,strnlen(message, sizeof(message)), 100);
+//	                   HAL_UART_Transmit(&huart1, (uint8_t*)message,strnlen(message, sizeof(message)), 100);
+
+	             	  if (hal_detect_Closeup_human())//判断人
+	             	    {
+	             		  HAL_ADC_Start_IT(&hadc1);
+	             		 led=100-(mean_value/409.5);
+	             		 hal_ledpwm(led);
+	             	   }
+//	             	  else {
 //
-//	                   i = 0;
-//	                   mean_value = 0;
-//	                   mean_voltage = 0.0;
-//	               }
-//	           }
-//	    else {
-//	               Error_Handler();
-//	           }
-//
-//	  if (hal_detect_Closeup_human())//判断人
-//	    {
-//		  hal_ledpwm(50);//调pwm波
-////		  HAL_ADC_Start_IT(&hadc1);
-//		  HAL_Delay(500);
-//
-//	   }
-//	  else {
-//
-//		  hal_ledpwm(0);//调pwm波
-//	}
+//	             		  hal_ledpwm(0);//调pwm波
+//	             	}
+
+	                   i = 0;
+	                   mean_value = 0;
+	                   mean_voltage = 0.0;
+	               }
+	           }
+	    else {
+	               Error_Handler();
+	           }
 
     /* USER CODE END WHILE */
 

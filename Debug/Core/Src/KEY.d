@@ -28,7 +28,9 @@ Core/Src/KEY.o: ../Core/Src/KEY.c \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/tim.h
+ C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/tim.h \
+ C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/PWM.h \
+ C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/gpio.h
 C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/KEY.h:
 C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
@@ -59,3 +61,5 @@ C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/stm32f1xx_hal_conf.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
 C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/tim.h:
+C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/PWM.h:
+C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/gpio.h:
