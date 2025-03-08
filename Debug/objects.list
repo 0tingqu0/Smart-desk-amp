@@ -3,6 +3,7 @@
 "./Core/Src/PWM.o"
 "./Core/Src/RED.o"
 "./Core/Src/adc.o"
+"./Core/Src/dma.o"
 "./Core/Src/gpio.o"
 "./Core/Src/main.o"
 "./Core/Src/photoresistor.o"

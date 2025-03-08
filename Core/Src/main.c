@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -39,20 +40,29 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+int value = 0;
+double  voltage  = 0.0;
+char message[32] = "";
+uint32_t i=0;
+long int mean_value=0;
+double mean_voltage=0.0;
 
 // 硬件配置宏定义
 #define SLIDING_WINDOW_SIZE   16   // 滑动窗口大小
-//#define ENABLE_LOW_POWER      1   // 启用低功耗模式
 #define ENABLE_LOW_POWER      0  // 关闭低功耗
 
 // 滑动窗口滤波相关变量
 int filter_buffer[SLIDING_WINDOW_SIZE] = {0};
 uint8_t filter_index = 0;
 long int filter_sum = 0;
-
 extern uint32_t led;
-
+uint8_t a=0;
 //extern int key1,key2,key3,key4,key5;
+
+//接收区
+#define RX_BUF_SIZE 3
+uint8_t uart3_rx_buf[RX_BUF_SIZE];
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -79,16 +89,52 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/* 低功耗模式入口 */
-//void Enter_LowPower_Mode(void) {
-//#if ENABLE_LOW_POWER
-//    HAL_SuspendTick();
-//    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-//    HAL_ResumeTick();
-//#endif
-//}
 
-/* 滑动窗口滤波 */
+/*
+ * RX回调函数
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART3) {
+        // 检查起始字节是否为0xAA
+        if (uart3_rx_buf[0] == 0xAA) {
+            // 通过UART1非阻塞发送数据
+            HAL_UART_Transmit_IT(&huart1, uart3_rx_buf, RX_BUF_SIZE);
+            if(uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x01 && a == 0){
+            	led=50;
+            	hal_ledpwm(led);//调pwm波开灯
+            	a=1;
+            }
+            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x10 && a == 1){
+            	led=0;
+            	hal_ledpwm(led);//调pwm波关灯
+            	a=0;
+            }
+            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && a == 1){
+            	led=led+10;
+                hal_ledpwm(led);//调pwm波
+            }
+            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && a == 1){
+                led=led-10;
+                hal_ledpwm(led);//调pwm波
+            }
+        }
+        // 重新启动接收
+        HAL_UART_Receive_IT(&huart3, uart3_rx_buf, RX_BUF_SIZE);
+    }
+}
+
+/*
+ * TX回调函数
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == USART1) {
+
+	    }
+}
+/*
+ * 滑动窗口滤波
+ */
 int Apply_Sliding_Filter(int new_value) {
     filter_sum -= filter_buffer[filter_index];
     filter_buffer[filter_index] = new_value;
@@ -107,13 +153,6 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-	int value = 0;
-	double  voltage  = 0.0;
-	char message[32] = "";
-	uint32_t i=0;
-	long int mean_value=0;
-	double mean_voltage=0.0;
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -127,6 +166,7 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
+
   /* USER CODE BEGIN SysInit */
   // 检查HSI时钟状态
   if (__HAL_RCC_GET_FLAG(RCC_FLAG_HSIRDY) == RESET) {
@@ -136,6 +176,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
@@ -145,7 +186,7 @@ int main(void)
 
   HAL_ADCEx_Calibration_Start(&hadc1);
 
-
+  HAL_UART_Receive_IT(&huart3, uart3_rx_buf, RX_BUF_SIZE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -153,47 +194,48 @@ int main(void)
   while (1)
   {
 
+
 //	  key_control();
-
-	    // 启动ADC转换并等待完成
-	    HAL_ADC_Start(&hadc1);  // 单次模式需每次启动
-	    //Enter_LowPower_Mode();//低功耗会导致无法烧录
-
-	    if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
-	               value = Apply_Sliding_Filter(HAL_ADC_GetValue(&hadc1));
-	               mean_value += value;
-	               voltage = (value / 4095.0) * 3.3;
-	               mean_voltage += voltage;
-	               i++;
-
-	               if (i == 1023) {
-	                   mean_value /= i;
-	                   mean_voltage /= i;
-
-	                   snprintf(message, sizeof(message), "ADC:%ld V:%.2f",mean_value, (float)mean_voltage);
-	                   // 直接发送数据
-	                   HAL_UART_Transmit(&huart1, (uint8_t*)message,strnlen(message, sizeof(message)), 100);
-
-	                   i = 0;
-	                   mean_value = 0;
-	                   mean_voltage = 0.0;
-	               }
-	           }
-	    else {
-	               Error_Handler();
-	           }
-
-	  if (hal_detect_Closeup_human())//判断人
-	    {
-		  hal_ledpwm(50);//调pwm波
-//		  HAL_ADC_Start_IT(&hadc1);
-		  HAL_Delay(500);
-
-	   }
-	  else {
-
-		  hal_ledpwm(0);//调pwm波
-	}
+//
+//	    // 启动ADC转换并等待完成
+//	    HAL_ADC_Start(&hadc1);  // 单次模式需每次启动
+//	    //Enter_LowPower_Mode();//低功耗会导致无法烧录
+//
+//	    if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
+//	               value = Apply_Sliding_Filter(HAL_ADC_GetValue(&hadc1));
+//	               mean_value += value;
+//	               voltage = (value / 4095.0) * 3.3;
+//	               mean_voltage += voltage;
+//	               i++;
+//
+//	               if (i == 1023) {
+//	                   mean_value /= i;
+//	                   mean_voltage /= i;
+//
+//	                   snprintf(message, sizeof(message), "ADC:%ld V:%.2f",mean_value, (float)mean_voltage);
+//	                   // 直接发送数据
+////	                   HAL_UART_Transmit(&huart1, (uint8_t*)message,strnlen(message, sizeof(message)), 100);
+//
+//	                   i = 0;
+//	                   mean_value = 0;
+//	                   mean_voltage = 0.0;
+//	               }
+//	           }
+//	    else {
+//	               Error_Handler();
+//	           }
+//
+//	  if (hal_detect_Closeup_human())//判断人
+//	    {
+//		  hal_ledpwm(50);//调pwm波
+////		  HAL_ADC_Start_IT(&hadc1);
+//		  HAL_Delay(500);
+//
+//	   }
+//	  else {
+//
+//		  hal_ledpwm(0);//调pwm波
+//	}
 
     /* USER CODE END WHILE */
 

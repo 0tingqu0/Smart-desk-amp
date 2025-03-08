@@ -1,4 +1,5 @@
-Core/Src/main.o: ../Core/Src/main.c \
+Core/Src/dma.o: ../Core/Src/dma.c \
+ C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/dma.h \
  C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
  C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/stm32f1xx_hal_conf.h \
@@ -26,19 +27,8 @@ Core/Src/main.o: ../Core/Src/main.c \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
- ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/adc.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/main.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/dma.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/tim.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/usart.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/gpio.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/PWM.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/RED.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/Bluetooth.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/KEY.h \
- C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/tim.h \
- C:/Users/zhang/Desktop/led_text_1.0/oled/Inc/oled.h
+ ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h
+C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/dma.h:
 C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/stm32f1xx_hal_conf.h:
@@ -67,15 +57,3 @@ C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/stm32f1xx_hal_conf.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/adc.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/main.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/dma.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/tim.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/usart.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/gpio.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/PWM.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/RED.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/Bluetooth.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/KEY.h:
-C:/Users/zhang/Desktop/led_text_1.0/Core/Inc/tim.h:
-C:/Users/zhang/Desktop/led_text_1.0/oled/Inc/oled.h:
