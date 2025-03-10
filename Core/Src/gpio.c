@@ -62,18 +62,22 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : red_Pin key1_Pin key2_Pin key3_Pin
-                           key4_Pin */
-  GPIO_InitStruct.Pin = red_Pin|key1_Pin|key2_Pin|key3_Pin
-                          |key4_Pin;
+  /*Configure GPIO pin : red_Pin */
+  GPIO_InitStruct.Pin = red_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(red_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : key1_Pin key2_Pin key3_Pin key4_Pin */
+  GPIO_InitStruct.Pin = key1_Pin|key2_Pin|key3_Pin|key4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : key5_Pin */
   GPIO_InitStruct.Pin = key5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(key5_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB6 PB7 */

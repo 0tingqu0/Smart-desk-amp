@@ -8,7 +8,7 @@
 
 //int key1=0,key2=0,key3=0,key4=0,key5=0;
 extern uint32_t led;
-
+extern uint8_t led_state;
 /*
  * key1 开关
  * key2 模式切换
@@ -16,15 +16,24 @@ extern uint32_t led;
  * key4 暗
  * key5 确定
  */
-void key_control() {
-	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12) == RESET) //key1 开关
-			{
-		HAL_Delay(20);
-		if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12) == RESET) {
-			while (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12) == RESET);
-			hal_ledpwm(0);
-		}
-	}
+void key_control()
+{
+    if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_12) == RESET) //key1 开关
+    {
+        HAL_Delay(20);
+        if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_12) == RESET && led_state == 0)
+        {
+            while (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_12) == RESET);
+            hal_ledpwm(50);
+            led_state = 1;
+        }
+        else if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_12) == RESET && led_state == 1)
+        {
+            while (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_12) == RESET);
+            hal_ledpwm(0);
+            led_state = 0;
+        }
+    }
 //	else if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)==RESET)//key2 模式切换
 //	{
 //		HAL_Delay(20);

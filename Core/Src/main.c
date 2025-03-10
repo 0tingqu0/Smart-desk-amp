@@ -56,7 +56,7 @@ int filter_buffer[SLIDING_WINDOW_SIZE] = {0};
 uint8_t filter_index = 0;
 long int filter_sum = 0;
 extern uint32_t led;
-uint8_t a=0;
+uint8_t led_state=0;
 //extern int key1,key2,key3,key4,key5;
 
 //接收区
@@ -99,21 +99,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         if (uart3_rx_buf[0] == 0xAA) {
             // 通过UART1非阻塞发送数据
             HAL_UART_Transmit_IT(&huart1, uart3_rx_buf, RX_BUF_SIZE);
-            if(uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x01 && a == 0){
+            if(uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x01 && led_state == 0){
             	led=20;
             	hal_ledpwm(led);//调pwm波开灯
-            	a=1;
+            	led_state=1;
             }
-            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x10 && a == 1){
+            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x10 && led_state == 1){
             	led=0;
             	hal_ledpwm(led);//调pwm波关灯
-            	a=0;
+            	led_state=0;
             }
-            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && a == 1){
+            if(uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && led_state == 1){
             	led=led+10;
             	hal_ledpwm(led);
             }
-            if(uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x10 && a == 1){
+            if(uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x10 && led_state == 1){
             	led=led-10;
             	hal_ledpwm(led);
             }
