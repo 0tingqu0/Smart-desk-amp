@@ -352,7 +352,11 @@ void TIM2_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-
+//    if (__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE)) {
+//        char cmd = huart1.Instance->DR;
+//        if (cmd == '+') target_count += 60;    // 增加1分钟
+//        if (cmd == '-') target_count -= 60;    // 减少1分钟
+//      }
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */

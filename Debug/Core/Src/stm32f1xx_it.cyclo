@@ -18,4 +18,4 @@
 ../Core/Src/stm32f1xx_it.c:324:6:TIM1_CC_IRQHandler	1
 ../Core/Src/stm32f1xx_it.c:338:6:TIM2_IRQHandler	1
 ../Core/Src/stm32f1xx_it.c:352:6:USART1_IRQHandler	1
-../Core/Src/stm32f1xx_it.c:366:6:USART3_IRQHandler	1
+../Core/Src/stm32f1xx_it.c:370:6:USART3_IRQHandler	1

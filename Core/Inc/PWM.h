@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 void hal_ledpwm(uint32_t a);
-
+//void hal_ledpwm(float duty);
 
 #ifdef __cplusplus
 }
