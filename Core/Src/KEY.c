@@ -22,7 +22,7 @@ uint8_t filter_index = 0;
 uint8_t led_state = 0;
 
 //定时变量
-uint32_t Tim_time = 3600; //初始1小时
+uint32_t Tim_time = 3601; //初始1小时
 
 // 全局变量定义
 volatile uint8_t mode = 0; // 0:手动, 1:自动, 2:定时
@@ -99,6 +99,7 @@ void Auto_Control(void)
 {
     // 启动ADC转换并等待完成
     HAL_ADC_Start(&hadc1);  // 单次模式需每次启动
+
     //Enter_LowPower_Mode();//低功耗会导致无法烧录
 
     if (HAL_ADC_PollForConversion(&hadc1 , 100) == HAL_OK)
@@ -112,34 +113,33 @@ void Auto_Control(void)
         if (i == 32)    //可改1023
         {
 
-            mean_value /= i;
-            mean_voltage /= i;
+        mean_value /= i;
+        mean_voltage /= i;
 
-            led = (mean_value * 100 / 4095);
 
-//            snprintf(message , sizeof(message) , "ADC:%ld V:%.2f LED:%d MODE:%d" , mean_value , (float) mean_voltage , led , mode); // 直接发送数据
-//
+//            snprintf(message , sizeof(message) , "LED:%lu i:%lu"  , led,i ); // 直接发送数据
 //            HAL_UART_Transmit(&huart1 , (uint8_t*) message , strnlen(message , sizeof(message)) , 100);
 
-            if ((hal_detect_Closeup_human() && led_state == 0) || led_state == 1)       //判断人
-            {
-                HAL_ADC_Start_IT(&hadc1);
+        if (((hal_detect_Closeup_human() && led_state == 0)) || (led_state == 1 && key_con == 1))      //判断人
+        {
+            HAL_ADC_Start_IT(&hadc1);
+            led = (mean_value * 100 / 4095);
+            hal_ledpwm(led);
+            led_state = 1;
+        }
 
-                hal_ledpwm(led);
-                led_state = 1;
-            }
+        if (led_state == 1 && red_state == 0)
+        {
 
-            if (led_state == 1 && red_state == 0)
-            {
+            hal_ledpwm(0);      //调pwm波
+            led_state = 0;
+//              HAL_NVIC_SystemReset();  // HAL库封装的系统复位函数[9](@ref)
+            key_con = 0;
+        }
 
-                hal_ledpwm(0);      //调pwm波
-                led_state = 0;
-//                               HAL_NVIC_SystemReset();  // HAL库封装的系统复位函数[9](@ref)
-            }
-
-            i = 0;
-            mean_value = 0;
-            mean_voltage = 0.0;
+        i = 0;
+        mean_value = 0;
+        mean_voltage = 0.0;
         }
     }
     else
@@ -153,36 +153,41 @@ void Auto_Control(void)
  */
 void Timer_Control(void)
 {
-    if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_14) == RESET) //key3 亮
+    if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_14) == GPIO_PIN_RESET) //key3 +
     {
         HAL_Delay(20);
-        if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_14) == RESET) //key3 亮
+        if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_14) == GPIO_PIN_RESET) //key3 +
         {
-            while (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_14) == RESET);
+            while (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_14) == GPIO_PIN_RESET);
             Tim_time += 600;
         }
     }
 
-    else if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_15) == RESET) //key4 暗
+    else if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_15) == GPIO_PIN_RESET) //key4 -
     {
         HAL_Delay(20);
-        if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_15) == RESET) //key4 暗
+        if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_15) == GPIO_PIN_RESET) //key4 -
         {
-            while (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_15) == RESET);
+            while (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_15) == GPIO_PIN_RESET);
             Tim_time -= 600;
         }
 
     }
-    else if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == RESET) //key5 确定
+    else if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET) //key5 确定
     {
         HAL_Delay(20);
-        if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == RESET)
+        if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET)
         {
-            while (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == RESET);
+            while (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET);
             AdjustTimerDuration(Tim_time);
-            HAL_GPIO_WritePin(GPIOC , GPIO_PIN_13 , RESET);
+            HAL_GPIO_WritePin(GPIOC , GPIO_PIN_13 , GPIO_PIN_RESET);
         }
     }
+
+    snprintf(message , sizeof(message) , "time:%lu" , Tim_time); // 直接发送数据
+    HAL_UART_Transmit(&huart1 , (uint8_t*) message , strnlen(message , sizeof(message)) , 100);
+    HAL_Delay(200);
+
 }
 
 /*
@@ -211,6 +216,10 @@ void key_control(void)
             hal_ledpwm(0);
             led_state = 0;
             key_con = 1;
+            if (mode == 0)
+            {
+                HAL_NVIC_SystemReset();  // HAL库封装的系统复位函数[9](@ref)
+            }
         }
     }
     else if (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_13) == GPIO_PIN_RESET) //key2 模式切换
@@ -246,6 +255,8 @@ void key_control(void)
             while (HAL_GPIO_ReadPin(GPIOB , GPIO_PIN_14) == GPIO_PIN_RESET);
             led += 10;
             hal_ledpwm(led);
+            if (mode == 2)
+                Tim_time += 600;
         }
     }
 
@@ -263,18 +274,23 @@ void key_control(void)
             {
                 led = led - 10;
                 hal_ledpwm(led);
+                if (mode == 2)
+                    Tim_time -= 600;
             }
         }
 
     }
-    else if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET) //key5 确定
+    if (mode == 2)
     {
-        HAL_Delay(20);
-        if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET)
+        if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET) //key5 确定
         {
-            while (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET);
-            AdjustTimerDuration(Tim_time);
-            HAL_GPIO_WritePin(GPIOC , GPIO_PIN_13 , GPIO_PIN_RESET);
+            HAL_Delay(20);
+            if (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET)
+            {
+                while (HAL_GPIO_ReadPin(GPIOA , GPIO_PIN_11) == GPIO_PIN_RESET);
+                AdjustTimerDuration(Tim_time);
+                HAL_GPIO_WritePin(GPIOC , GPIO_PIN_13 , GPIO_PIN_RESET);
+            }
         }
     }
 

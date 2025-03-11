@@ -63,16 +63,21 @@ void Error_Handler(void);
 #define red_GPIO_Port GPIOB
 #define key1_Pin GPIO_PIN_12
 #define key1_GPIO_Port GPIOB
+#define key1_EXTI_IRQn EXTI15_10_IRQn
 #define key2_Pin GPIO_PIN_13
 #define key2_GPIO_Port GPIOB
+#define key2_EXTI_IRQn EXTI15_10_IRQn
 #define key3_Pin GPIO_PIN_14
 #define key3_GPIO_Port GPIOB
+#define key3_EXTI_IRQn EXTI15_10_IRQn
 #define key4_Pin GPIO_PIN_15
 #define key4_GPIO_Port GPIOB
+#define key4_EXTI_IRQn EXTI15_10_IRQn
 #define led_Pin GPIO_PIN_8
 #define led_GPIO_Port GPIOA
 #define key5_Pin GPIO_PIN_11
 #define key5_GPIO_Port GPIOA
+#define key5_EXTI_IRQn EXTI15_10_IRQn
 
 /* USER CODE BEGIN Private defines */
 void AdjustTimerDuration(uint32_t seconds);

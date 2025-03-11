@@ -378,6 +378,26 @@ void USART3_IRQHandler(void)
   /* USER CODE END USART3_IRQn 1 */
 }
 
+/**
+  * @brief This function handles EXTI line[15:10] interrupts.
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+
+  /* USER CODE END EXTI15_10_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(key5_Pin);
+  HAL_GPIO_EXTI_IRQHandler(key1_Pin);
+  HAL_GPIO_EXTI_IRQHandler(key2_Pin);
+  HAL_GPIO_EXTI_IRQHandler(key3_Pin);
+  HAL_GPIO_EXTI_IRQHandler(key4_Pin);
+  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
+
+  key_control();
+
+  /* USER CODE END EXTI15_10_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */

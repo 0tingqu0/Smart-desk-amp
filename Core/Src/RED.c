@@ -13,7 +13,7 @@ uint8_t red_state=0;
  */
 bool hal_detect_Closeup_human(void)//近距离0-10mm
 {
-	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0)==SET)
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0)==GPIO_PIN_SET)
 	{
 	    red_state=0;
 		return false;//无人
@@ -27,7 +27,7 @@ bool hal_detect_Closeup_human(void)//近距离0-10mm
 
 bool hal_detect_Ldistance_human(void)//远距离10-500mm
 {
-	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0)==SET)
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0)==GPIO_PIN_SET)
 	{
 		return true;//无人
 	}

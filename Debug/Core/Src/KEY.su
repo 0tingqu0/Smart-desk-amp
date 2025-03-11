@@ -2,4 +2,4 @@
 ../Core/Src/KEY.c:87:5:Apply_Sliding_Filter	16	static
 ../Core/Src/KEY.c:98:6:Auto_Control	16	static
 ../Core/Src/KEY.c:154:6:Timer_Control	8	static
-../Core/Src/KEY.c:195:6:key_control	8	static
+../Core/Src/KEY.c:200:6:key_control	8	static
