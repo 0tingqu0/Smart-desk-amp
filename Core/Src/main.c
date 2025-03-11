@@ -39,27 +39,24 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-int value = 0;
-double voltage = 0.0;
-char message[32] = "";
-uint32_t i = 0;
-long int mean_value = 0;
-double mean_voltage = 0.0;
 
 // 硬件配置宏定义
-#define SLIDING_WINDOW_SIZE   16   // 滑动窗口大小
 #define ENABLE_LOW_POWER      0  // 关闭低功耗
 
-// 滑动窗口滤波相关变量
-int filter_buffer[SLIDING_WINDOW_SIZE] = { 0 };
-uint8_t filter_index = 0;
-long int filter_sum = 0;
 extern uint32_t led;
 extern uint8_t red_state;
+extern uint8_t led_state;
 extern uint8_t key_con;
-uint8_t led_state = 0;
-//extern int key1,key2,key3,key4,key5;
-
+extern volatile uint8_t mode;
+extern int value;
+extern double voltage;
+extern char message[64];
+extern uint32_t i;
+extern long int mean_value;
+extern double mean_voltage;
+extern uint32_t Tim_time;
+volatile uint32_t timerCounter = 0;     // 软件计数器（单位：秒）
+volatile uint32_t targetCount = 10;   // 默认目标时间：3600秒=1小时
 //接收区
 #define RX_BUF_SIZE 3
 uint8_t uart3_rx_buf[RX_BUF_SIZE];
@@ -114,6 +111,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 led = 0;
                 hal_ledpwm(led); //调pwm波关灯
                 led_state = 0;
+
             }
             if (uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && led_state == 1)
             {
@@ -150,26 +148,45 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 /*
  *  在中断中加入误差补偿（单位：微秒）
  */
-static int32_t error_compensation = 0;
+//static int32_t error_compensation = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM2) {
-        uint32_t actual_interval = 1000000 + error_compensation; // 1秒补偿
-        TIM2->ARR = actual_interval * (SystemCoreClock / 1000000) / (htim2.Init.Prescaler +1) -1;
-        error_compensation = 1000000 - actual_interval; // 计算累积误差
-      }
+    if (htim->Instance == TIM2)
+    {
+        if (htim->Instance == TIM2)
+        {
+            timerCounter++;                    // 每秒递增
+
+            if (timerCounter >= targetCount)
+            { // 达到目标时间
+                timerCounter = 0;                // 重置计数器
+
+                /* 用户自定义操作（示例：翻转LED） */
+                HAL_GPIO_TogglePin(GPIOC , GPIO_PIN_13); // 假设LED接在PC13
+                snprintf(message , sizeof(message) , "ADC:%ld V:%.2f i:%lu LED:%lu MODE:%u" , mean_value ,
+                        (float) mean_voltage , i , led , mode); // 直接发送数据
+                HAL_UART_Transmit(&huart1 , (uint8_t*) message , strnlen(message , sizeof(message)) , HAL_MAX_DELAY);
+                hal_ledpwm(0);
+                led_state = 0;
+
+
+//              HAL_NVIC_SystemReset();  // HAL库封装的系统复位函数[9](@ref)
+
+                /* 可扩展：触发事件/发送信号等 */
+            }
+        }
+    }
 }
+
 /*
- * 滑动窗口滤波
+ * 动态调节定时时长
  */
-int Apply_Sliding_Filter(int new_value)
+void AdjustTimerDuration(uint32_t seconds)
 {
-    filter_sum -= filter_buffer[filter_index];
-    filter_buffer[filter_index] = new_value;
-    filter_sum += new_value;
-    filter_index = (filter_index + 1) % SLIDING_WINDOW_SIZE;
-    return filter_sum / SLIDING_WINDOW_SIZE;
+    targetCount = seconds;    // 直接修改目标时间
+    timerCounter = 0;          // 可选：重置当前计数
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -215,6 +232,8 @@ int main(void)
 
     HAL_ADCEx_Calibration_Start(&hadc1);
     HAL_UART_Receive_IT(&huart3 , uart3_rx_buf , RX_BUF_SIZE);
+    HAL_TIM_Base_Start_IT(&htim2);
+
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -222,54 +241,21 @@ int main(void)
     while (1)
     {
 
-        key_control();
-
-        // 启动ADC转换并等待完成
-        HAL_ADC_Start(&hadc1);  // 单次模式需每次启动
-        //Enter_LowPower_Mode();//低功耗会导致无法烧录
-
-        if (HAL_ADC_PollForConversion(&hadc1 , 100) == HAL_OK)
+        Manual_Control();
+        switch (mode)
         {
-            value = Apply_Sliding_Filter(HAL_ADC_GetValue(&hadc1));
-            mean_value += value;
-            voltage = (value / 4095.0) * 3.3;
-            mean_voltage += voltage;
-            i++;
+            case 0: // 手动模式
+                key_control();
 
-            if (i == 1023)
-            {
-                mean_value /= i;
-                mean_voltage /= i;
+                break;
+            case 1: // 自动模式
+                Auto_Control();
 
-//	                   snprintf(message, sizeof(message), "ADC:%ld V:%.2f",mean_value, (float)mean_voltage);
-//	                   // 直接发送数据
-//	                   HAL_UART_Transmit(&huart1, (uint8_t*)message,strnlen(message, sizeof(message)), 100);
-                if (key_con == 0)
-                {
-                    if (hal_detect_Closeup_human() && led_state == 0)	    //判断人
-                    {
-                        HAL_ADC_Start_IT(&hadc1);
-                        led = 100 - (mean_value / 409.5);
-                        hal_ledpwm(led);
-                        led_state = 1;
-                    }
-
-                    else if (red_state == 0)
-                    {
-
-                        hal_ledpwm(0);	    //调pwm波
-                    }
-                }
-
-                i = 0;
-                mean_value = 0;
-                mean_voltage = 0.0;
-            }
-        }
-        else
-        {
-            Error_Handler();
-        }
+                break;
+            case 2: // 定时模式
+                Timer_Control();
+                break;
+        };
 
         /* USER CODE END WHILE */
 

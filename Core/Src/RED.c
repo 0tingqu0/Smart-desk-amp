@@ -36,3 +36,4 @@ bool hal_detect_Ldistance_human(void)//远距离10-500mm
 		return false;//有人
 	}
 }
+
