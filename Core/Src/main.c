@@ -168,10 +168,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                 HAL_UART_Transmit(&huart1 , (uint8_t*) message , strnlen(message , sizeof(message)) , HAL_MAX_DELAY);
                 hal_ledpwm(0);
                 led_state = 0;
-
-
 //              HAL_NVIC_SystemReset();  // HAL库封装的系统复位函数[9](@ref)
-
                 /* 可扩展：触发事件/发送信号等 */
             }
         }
