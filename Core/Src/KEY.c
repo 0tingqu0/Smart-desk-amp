@@ -110,36 +110,40 @@ void Auto_Control(void)
         mean_voltage += voltage;
         i++;
 
-        if (i == 32)    //可改1023
+        if (i == 1023)    //可改1023
         {
 
-        mean_value /= i;
-        mean_voltage /= i;
+            mean_value /= i;
+            mean_voltage /= i;
 
-
-//            snprintf(message , sizeof(message) , "LED:%lu i:%lu"  , led,i ); // 直接发送数据
-//            HAL_UART_Transmit(&huart1 , (uint8_t*) message , strnlen(message , sizeof(message)) , 100);
-
-        if (((hal_detect_Closeup_human() && led_state == 0)) || (led_state == 1 && key_con == 1))      //判断人
-        {
-            HAL_ADC_Start_IT(&hadc1);
+            snprintf(message , sizeof(message) , "LED:%lu i:%lu"  , led,i ); // 直接发送数据
+            HAL_UART_Transmit(&huart1 , (uint8_t*) message , strnlen(message , sizeof(message)) , 100);
             led = (mean_value * 100 / 4095);
-            hal_ledpwm(led);
-            led_state = 1;
-        }
+            if (((hal_detect_Closeup_human() && led_state == 0)) || (led_state == 1 && key_con == 1))   //开灯   //判断人
+            {
+                HAL_ADC_Start_IT(&hadc1);
 
-        if (led_state == 1 && red_state == 0)
-        {
+                hal_ledpwm(led);
+                led_state = 1;
+            }
+            else if (led_state == 1 && red_state == 1)//感光
+            {
+                HAL_ADC_Start_IT(&hadc1);
+                led = (mean_value * 100 / 4095);
+                hal_ledpwm(led);
+            }
+            else if (led_state == 1 && red_state == 0)      //人走灯灭
+            {
 
-            hal_ledpwm(0);      //调pwm波
-            led_state = 0;
+                hal_ledpwm(0);      //调pwm波
+                led_state = 0;
 //              HAL_NVIC_SystemReset();  // HAL库封装的系统复位函数[9](@ref)
-            key_con = 0;
-        }
+                key_con = 0;
+            }
 
-        i = 0;
-        mean_value = 0;
-        mean_voltage = 0.0;
+            i = 0;
+            mean_value = 0;
+            mean_voltage = 0.0;
         }
     }
     else
