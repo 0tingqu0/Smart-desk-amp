@@ -1,5 +1,5 @@
-../Core/Src/KEY.c:37:6:Manual_Control	8	static
-../Core/Src/KEY.c:87:5:Apply_Sliding_Filter	16	static
-../Core/Src/KEY.c:98:6:Auto_Control	24	static
-../Core/Src/KEY.c:158:6:Timer_Control	8	static
-../Core/Src/KEY.c:204:6:key_control	8	static
+../Core/Src/KEY.c:39:6:Manual_Control	8	static
+../Core/Src/KEY.c:105:5:Apply_Sliding_Filter	16	static
+../Core/Src/KEY.c:116:6:Auto_Control	16	static
+../Core/Src/KEY.c:177:6:Timer_Control	16	static
+../Core/Src/KEY.c:261:6:key_control	8	static

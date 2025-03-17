@@ -48,18 +48,30 @@ extern uint8_t red_state;
 extern uint8_t led_state;
 extern uint8_t key_con;
 extern volatile uint8_t mode;
+extern volatile uint8_t key5_state;
 extern int value;
 extern double voltage;
 extern char message[64];
 extern uint32_t i;
 extern long int mean_value;
 extern double mean_voltage;
-extern uint32_t Tim_time;
+
+
+volatile uint32_t Tim_time = 3610; //初始1小时
 volatile uint32_t timerCounter = 0;     // 软件计数器（单位：秒）
 volatile uint32_t targetCount = 10;   // 默认目标时间：3600秒=1小时
+volatile uint32_t time_change=600;
+
+volatile uint16_t rx_index = 0;  // 接收索引
+volatile uint8_t frame_ready = 0;  // 帧完成标志
+
 //接收区
-#define RX_BUF_SIZE 3
-uint8_t uart3_rx_buf[RX_BUF_SIZE];
+//#define MAXSIZE 50
+//#define RX3_BUF_SIZE 3
+//#define RX1_BUF_SIZE 6
+
+uint8_t uart3_rx_buf[8];
+uint8_t uart1_rx_buf[8];
 
 /* USER CODE END PTD */
 
@@ -91,59 +103,117 @@ void SystemClock_Config(void);
 /*
  * RX回调函数
  */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
+    if (huart->Instance == USART1)
+    {
+        HAL_UART_Transmit_DMA(&huart1 , uart1_rx_buf , sizeof(uart1_rx_buf));
+        if (uart1_rx_buf[0] == 0x40)
+        {
+            if (uart1_rx_buf[1] == 0x6F && uart1_rx_buf[2] == 0x70 && led_state == 0)
+            {
+                led = 50;
+                hal_ledpwm(led); //调pwm波开灯
+                led_state = 1;
+                key_con = 1;
+//                   memset(uart1_rx_buf,0,RX1_BUF_SIZE);
+            }
+            else if (uart1_rx_buf[1] == 0x63 && uart1_rx_buf[2] == 0x6c && led_state == 1)
+            {
+                led = 0;
+                hal_ledpwm(led); //调pwm波关灯
+                led_state = 0;
+                key_con = 1;
+//                   memset(uart1_rx_buf,0,RX1_BUF_SIZE);
+            }
+            else if (uart1_rx_buf[1] == 0x75 && uart1_rx_buf[2] == 0x70 && led_state == 1)
+            {
+                led +=5;
+                hal_ledpwm(led);
+//                   memset(uart1_rx_buf,0,RX1_BUF_SIZE);
+            }
+            else if (uart1_rx_buf[1] == 0x64 && uart1_rx_buf[2] == 0x6F && led_state == 1)
+            {
+                if (led == 0)
+                {
+                    led_state=0;
+                }
+                else
+                {
+                    led -=  5;
+                }
+                hal_ledpwm(led);
+            }
+        }
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart1 , uart1_rx_buf , sizeof(uart1_rx_buf));
+    }
+
     if (huart->Instance == USART3)
     {
         // 检查起始字节是否为0xAA
         if (uart3_rx_buf[0] == 0xAA)
         {
             // 通过UART1非阻塞发送数据
-            HAL_UART_Transmit_IT(&huart1 , uart3_rx_buf , RX_BUF_SIZE);
+            HAL_UART_Transmit_DMA(&huart1 , uart3_rx_buf , sizeof(uart3_rx_buf));
             if (uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x01 && led_state == 0)
             {
                 led = 50;
                 hal_ledpwm(led); //调pwm波开灯
                 led_state = 1;
+                key_con = 1;
+//                memset(uart3_rx_buf, 0, 3);
             }
-            if (uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x10 && led_state == 1)
+            else if (uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x10 && led_state == 1)
             {
                 led = 0;
                 hal_ledpwm(led); //调pwm波关灯
                 led_state = 0;
+                key_con = 1;
+//                memset(uart3_rx_buf, 0, RX3_BUF_SIZE);
 
             }
-            if (uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && led_state == 1)
+            else if (uart3_rx_buf[1] == 0x10 && uart3_rx_buf[2] == 0x01 && led_state == 1)
             {
                 led = led + 10;
                 hal_ledpwm(led);
+//                memset(uart3_rx_buf, 0, RX3_BUF_SIZE);
             }
-            if (uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x10 && led_state == 1)
+            else if (uart3_rx_buf[1] == 0x01 && uart3_rx_buf[2] == 0x10 && led_state == 1)
             {
                 if (led == 0)
                 {
+                    led_state=0;
                 }
                 else
                 {
                     led = led - 10;
                 }
                 hal_ledpwm(led);
+//                memset(uart3_rx_buf, 0, RX3_BUF_SIZE);
             }
         }
+
         // 重新启动接收
-        HAL_UART_Receive_IT(&huart3 , uart3_rx_buf , RX_BUF_SIZE);
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart3 , uart3_rx_buf , sizeof(uart3_rx_buf));
     }
 }
 
 /*
  * TX回调函数
  */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+void HAL_UARTEx_TxEventCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1)
     {
-
+        memset(uart1_rx_buf , 0 , sizeof(uart1_rx_buf));  // 发送完成后清空
+//        HAL_UART_Transmit_IT(&huart1 , uart1_rx_buf , RX1_BUF_SIZE);
     }
+    if (huart->Instance == USART3)
+    {
+        memset(uart3_rx_buf , 0 , sizeof(uart3_rx_buf));  // 发送完成后清空
+//        HAL_UART_Transmit_IT(&huart3 , uart3_rx_buf , RX3_BUF_SIZE);
+    }
+
 }
 
 /*
@@ -163,13 +233,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
                 timerCounter = 0;                // 重置计数器
 
                 /* 用户自定义操作（示例：翻转LED） */
-                HAL_GPIO_TogglePin(GPIOC , GPIO_PIN_13); // 假设LED接在PC13
+//                HAL_GPIO_TogglePin(GPIOC , GPIO_PIN_13); // 假设LED接在PC13
 //                snprintf(message , sizeof(message) , "ADC:%ld V:%.2f i:%lu LED:%lu MODE:%u" , mean_value ,
 //                        (float) mean_voltage , i , led , mode); // 直接发送数据
 //                HAL_UART_Transmit(&huart1 , (uint8_t*) message , strnlen(message , sizeof(message)) , HAL_MAX_DELAY);
-                hal_ledpwm(0);
-                led_state = 0;
-
+                if (key5_state == 1&&led_state==1)
+                {
+                    hal_ledpwm(0);
+                    led_state = 0;
+                    key5_state = 0;
+                }
 
             }
         }
@@ -229,10 +302,21 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     HAL_ADCEx_Calibration_Start(&hadc1);
-    HAL_UART_Receive_IT(&huart3 , uart3_rx_buf , RX_BUF_SIZE);
+
+
+
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart1 , uart1_rx_buf , sizeof(uart1_rx_buf));
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart3 , uart3_rx_buf , sizeof(uart3_rx_buf));
+
     HAL_TIM_Base_Start_IT(&htim2);
+
     HAL_ADC_Start_IT(&hadc1);
 
+//    __HAL_UART_ENABLE_IT(&huart1, UART_IT_ERR);  // 启用错误中断（包括ORE）
+//    __HAL_UART_ENABLE_IT(&huart3, UART_IT_ERR);  // 启用错误中断（包括ORE）
+//    HAL_NVIC_SystemReset();  // HAL库封装的系统复位函数[9](@ref)
+//    __HAL_UART_ENABLE_IT(&huart1 , UART_IT_IDLE);  // 开启空闲中断
+//    __HAL_UART_ENABLE_IT(&huart3 , UART_IT_IDLE);  // 开启空闲中断
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -240,21 +324,7 @@ int main(void)
     while (1)
     {
 
-//        Manual_Control();
-        switch (mode)
-        {
-            case 0: // 手动模式
-                key_control();
-
-                break;
-            case 1: // 自动模式
-                Auto_Control();
-
-                break;
-            case 2: // 定时模式
-                Timer_Control();
-                break;
-        };
+        Manual_Control();
 
     /* USER CODE END WHILE */
 
